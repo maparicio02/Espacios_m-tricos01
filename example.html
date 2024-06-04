@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Medir Distancia en un Plano Cartesiano</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: row;
+            align-items: flex-start;
+            font-family: Arial, sans-serif;
+        }
+        #canvas {
+            border: 1px solid black;
+            cursor: crosshair;
+        }
+        #resultado {
+            margin-left: 20px;
+            padding: 10px;
+            border: 1px solid black;
+            background-color: #f9f9f9;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="canvas" width="800" height="800"></canvas>
+    <div id="resultado">
+        <h2>Resultado</h2>
+        <p id="distancia"></p>
+        <p id="mensaje-adicional"></p>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const distanciaElem = document.getElementById('distancia');
+        const mensajeAdicionalElem = document.getElementById('mensaje-adicional');
+        let puntos = [];
+
+        // Función que calcula la distancia euclidiana entre dos puntos (x1, y1) y (x2, y2)
+        function calcularDistancia(x1, y1, x2, y2) {
+            if (x1 === x2 && y1 === y2) {
+                return 0; // Si los puntos son iguales, la distancia es cero
+            }
+            const deltaX = x2 - x1;
+            const deltaY = y2 - y1;
+            return Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+        }
+
+        // Función para dibujar el eje con números consecutivos
+        function dibujarEjes() {
+            const width = canvas.width;
+            const height = canvas.height;
+            const paso = 50;
+            const mitadWidth = width / 2;
+            const mitadHeight = height / 2;
+
+            ctx.clearRect(0, 0, width, height);
+
+            ctx.beginPath();
+            ctx.strokeStyle = '#000';
+            ctx.lineWidth = 1;
+
+            // Dibujar líneas del eje y números
+            for (let i = 0; i <= width; i += paso) {
+                // Líneas verticales
+                ctx.moveTo(i, 0);
+                ctx.lineTo(i, height);
+                if (i !== mitadWidth) {
+                    ctx.fillText(i - mitadWidth, i, mitadHeight + 10);
+                }
+            }
+
+            for (let i = 0; i <= height; i += paso) {
+                // Líneas horizontales
+                ctx.moveTo(0, i);
+                ctx.lineTo(width, i);
+                if (i !== mitadHeight) {
+                    ctx.fillText(mitadHeight - i, mitadWidth + 5, i);
+                }
+            }
+
+            // Dibujar el eje x y el eje y
+            ctx.moveTo(mitadWidth, 0);
+            ctx.lineTo(mitadWidth, height);
+            ctx.moveTo(0, mitadHeight);
+            ctx.lineTo(width, mitadHeight);
+
+            ctx.stroke();
+        }
+
+        // Llamar a la función para dibujar los ejes iniciales
+        dibujarEjes();
+
+        // Manejar el evento de clic en el canvas
+        canvas.addEventListener('click', function(event) {
+            const rect = canvas.getBoundingClientRect();
+            const x = event.clientX - rect.left;
+            const y = event.clientY - rect.top;
+
+            // Convertir las coordenadas del canvas a coordenadas del plano cartesiano
+            const coordX = x - canvas.width / 2;
+            const coordY = canvas.height / 2 - y;
+
+            puntos.push({ x: coordX, y: coordY });
+
+            // Dibujar el punto en el canvas
+            ctx.beginPath();
+            ctx.arc(x, y, 5, 0, 2 * Math.PI);
+            ctx.fillStyle = 'red';
+            ctx.fill();
+
+            // Mostrar las coordenadas del punto
+            ctx.fillStyle = 'black';
+            ctx.fillText(`(${coordX}, ${coordY})`, x + 10, y - 10);
+
+            // Si ya tenemos dos puntos, calcular la distancia y dibujar la línea
+            if (puntos.length === 2) {
+                const punto1 = puntos[0];
+                const punto2 = puntos[1];
+                const distancia = calcularDistancia(punto1.x, punto1.y, punto2.x, punto2.y);
+                distanciaElem.textContent = `La distancia entre el punto (${punto1.x}, ${punto1.y}) y el punto (${punto2.x}, ${punto2.y}) es: ${distancia.toFixed(2)} unidades`;
+
+                // Verificar si los puntos son iguales y mostrar un mensaje adicional si es el caso
+                if (distancia === 0) {
+                    mensajeAdicionalElem.textContent = "Se cumple la propiedad de que la distancia entre un punto y el mismo punto es 0. Además, se cumple la propiedad de que la medida de la distancia siempre es positiva.";
+                } else {
+                    mensajeAdicionalElem.textContent = "Se cumple la propiedad de que la medida de la distancia siempre es positiva.";
+                }
+
+                // Dibujar la línea entre los dos puntos
+                ctx.beginPath();
+                ctx.moveTo(punto1.x + canvas.width / 2, canvas.height / 2 - punto1.y);
+                ctx.lineTo(punto2.x + canvas.width / 2, canvas.height / 2 - punto2.y);
+                ctx.strokeStyle = 'blue';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+
+                // Restablecer puntos para permitir nueva selección
+                puntos = [];
+                // Limpiar el canvas y dibujar ejes después de mostrar la distancia
+                setTimeout(() => {
+                    dibujarEjes();
+                    distanciaElem.textContent = '';
+                    mensajeAdicionalElem.textContent = '';
+                }, 3000);
+            }
+        });
+    </script>
+</body>
+</html>
